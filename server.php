@@ -1,8 +1,8 @@
 <?php
 header('Access-Control-Allow-Origin: *');
-header('Content-Type: application/json');
 error_reporting(0);
 
+//cpu info (lscpu)
 $lscpu = explode("\n", shell_exec("export LC_ALL=C | lscpu")); //split output in lines
 for ($i=0; $i<sizeof($lscpu); $i++){
 	$lscpu_c = preg_split("/:\s\s*/",$lscpu[$i]); //split in columns
@@ -10,9 +10,10 @@ for ($i=0; $i<sizeof($lscpu); $i++){
 	unset($lscpu[$i]);
 }
 
-$free_l = explode("\n", shell_exec("export LC_ALL=C |  free")); //split output in lines
+//memory info (free)
+$free_l = explode("\n", shell_exec("export LC_ALL=C |  free"));
 for ($i=0; $i<sizeof($free_l); $i++){
-	$free_c = preg_split("/\s\s*/", $free_l[$i]); //split in columns
+	$free_c = preg_split("/\s\s*/", $free_l[$i]);
 	if ($i==0){
 		$free_t = $free_c; //get titles from first line
 	}else{
@@ -22,11 +23,12 @@ for ($i=0; $i<sizeof($free_l); $i++){
 	}
 }
 
-$df_l = explode("\n", shell_exec("export LC_ALL=C | df")); //split in lines
+//disk info (df)
+$df_l = explode("\n", shell_exec("export LC_ALL=C | df"));
 for ($i=0; $i<sizeof($df_l); $i++){
-	$df_c = preg_split("/\s\s*/", $df_l[$i]); //split in columns
+	$df_c = preg_split("/\s\s*/", $df_l[$i]);
 	if ($i==0){
-		$df_t = $df_c; //get titles from first line
+		$df_t = $df_c;
 	}else{
 		for ($j=1; $j<sizeof($df_c); $j++){
 			$df[ $df_c[0] ][ $df_t[$j] ] = $df_c[$j];
@@ -41,9 +43,11 @@ foreach ($df as $key => $value) {
 	}
 }
 
+//server uptime
 $uptime[up] = substr(shell_exec("export LC_ALL=C | uptime -p"), 3);
 $uptime[loadaverage] = explode(", ",trim ( substr(strrchr(shell_exec("export LC_ALL=C | uptime"), "load average:"), 14) ) ); 
 
+//number of bytes received
 function getTx(){
 	foreach( glob("/sys/class/net/*") as $path ) {
 	    if( $path != "/sys/class/net/lo" AND file_exists( "$path/statistics/rx_bytes" ) AND trim( file_get_contents("$path/statistics/rx_bytes") ) != '0' ){
@@ -53,6 +57,7 @@ function getTx(){
 	return(trim(file_get_contents("/sys/class/net/$interface/statistics/tx_bytes"))); 
 }
 
+//number of bytes transmitted
 function getRx(){
 	foreach( glob("/sys/class/net/*") as $path ) {
 	    if( $path != "/sys/class/net/lo" AND file_exists( "$path/statistics/rx_bytes" ) AND trim( file_get_contents("$path/statistics/rx_bytes") ) != '0' ){
@@ -62,6 +67,7 @@ function getRx(){
 	return(trim(file_get_contents("/sys/class/net/$interface/statistics/rx_bytes"))); 
 }
 
+//get server info
 $uname[name] = shell_exec("uname");
 $uname[hostname] = shell_exec("uname -n");
 $uname[release] = shell_exec("uname -r");
@@ -69,8 +75,20 @@ $uname[version] = shell_exec("uname -v");
 $uname[machine] = shell_exec("uname -m");
 $uname[type] = shell_exec("uname -o");
 
-if (($_GET["format"]=="max")||(!$_GET["format"])){
-	$max = array(
+if ($_GET["format"]=="json"){
+	header('Content-Type: application/json');
+
+	$rx1 = getRx();
+	$tx1 = getTx();
+	if (is_numeric($_GET["time"])) {
+		$time = $_GET["time"];
+	}else{
+		$time = 4;
+	}
+	sleep($time);
+	$rx2 = getRx();
+	$tx2 = getTx();
+	$json = array(
 		"CPU"=>(array(
 			"architecture"=>$lscpu["Architecture"],
 			"cpus"=>$lscpu["CPU(s)"],
@@ -89,45 +107,37 @@ if (($_GET["format"]=="max")||(!$_GET["format"])){
 			"available"=>round($df[$dfname]["Available"]/1024/1024,2),
 			"use"=>(int)substr($df[$dfname]["Use%"],0,-1)
 		)),
+		"net"=>array(
+			"down"=>round(((($rx2-$rx1)/$time)/1024),2),
+			"up"=>round(((($tx2-$tx1)/$time)/1024),2)
+		),
 		"Uptime"=>$uptime,
 		"PC"=>$uname,
-		"Version"=>"1.0"
+		"Version"=>"2.0"
 	);
-	echo json_encode($max);
-}
-
-else if ($_GET["format"]=="net"){
-	$rx1 = getRx();
-	$tx1 = getTx();
-	if ($_GET["time"]){
-		$time = $_GET["time"];
-	}else{
-		$time = 4;
-	}
-	sleep($time);
-	$rx2 = getRx();
-	$tx2 = getTx();
-	$net = array(
-		"down"=>round(((($rx2-$rx1)/$time)/1024),2),
-		"up"=>round(((($tx2-$tx1)/$time)/1024),2)
-	);
-	echo json_encode($net);
-}
+	echo json_encode($json);
+} 
 
 else if ($_GET["format"]=="full"){
 	$full = array(
-		"lscpu"=>$lscpu, //CPU
-		"free"=>$free, //memory
-		"df"=>$df, //disk
-		"uptime"=>$uptime, //uptime
+		"lscpu"=>$lscpu,
+		"free"=>$free,
+		"df"=>$df,
+		"uptime"=>$uptime,
 		"net"=>array(
 			"Rx"=>getRx(),
 			"Tx"=>getTx()
-		), //network
-		"uname"=>$uname, //OS info
-		"version"=>"1.0"
+		),
+		"uname"=>$uname,
+		"version"=>"2.0"
 	);
 	echo json_encode($full);
+}
+
+else {
+	$host = "http://$_SERVER[SERVER_ADDR]$_SERVER[REQUEST_URI]";
+	echo "<img src=https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=$host>";
+	echo "<p>$host</p>";
 }
 
 ?>
