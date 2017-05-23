@@ -135,8 +135,28 @@ else if ($_GET["format"]=="full"){
 }
 
 else {
+	function httpPOST($params, $url){
+		$query = http_build_query ($params);
+		$contextData = array ( 
+						'method' => 'POST',
+						'header' => "Connection: close\r\n".
+									"Content-Length: ".strlen($query)."\r\n",
+						'content'=> $query );
+		$context = stream_context_create (array ( 'http' => $contextData ));
+		$result =  file_get_contents (
+						$url,
+						false,
+						$context);
+		return $result;
+	};
+
 	$host = "http://$_SERVER[SERVER_ADDR]$_SERVER[REQUEST_URI]";
-	echo "<img src=https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=$host>";
+
+	//post host to server to get key
+	$key =  httpPost(array('url' => $host), "https://monitorize.herokuapp.com/new");
+
+	echo "<p>$key</p>";
+	echo "<img src=https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=$key>";
 	echo "<p>$host</p>";
 }
 
