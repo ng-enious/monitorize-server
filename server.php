@@ -156,7 +156,7 @@ else {
 	$key =  httpPost(array('url' => $host), "https://monitorize.herokuapp.com/new");
 
 	echo "<p>$key</p>";
-	echo "<img src=https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=$key>";
+	echo "<img src=http://api.qrserver.com/v1/create-qr-code/?size=150x150&data=$key>";
 	echo "<p>$host</p>";
 }
 
