@@ -150,7 +150,7 @@ else {
 		return $result;
 	};
 
-	$host = "http://$_SERVER[SERVER_ADDR]$_SERVER[REQUEST_URI]";
+	$host = "http://$_SERVER[SERVER_NAME]$_SERVER[REQUEST_URI]";
 
 	//post host to server to get key
 	$key =  httpPost(array('url' => $host), "https://monitorize.herokuapp.com/new");
