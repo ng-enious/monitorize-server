@@ -89,18 +89,18 @@ if ($_GET["format"]=="json"){
     $rx2 = getRx();
     $tx2 = getTx();
     $json = array(
-        "CPU"=>(array(
+        "cpu"=>(array(
             "architecture"=>$lscpu["Architecture"],
             "cpus"=>$lscpu["CPU(s)"],
             "cpumhz"=>$lscpu["CPU MHz"]
         )),
-        "Memory"=>(array(
+        "memory"=>(array(
             "total"=>round($free["Mem:"]["total"]/1024/1024,2),
             "used"=>round($free["Mem:"]["used"]/1024/1024,2),
             "free"=>round($free["Mem:"]["free"]/1024/1024,2),
             "use"=>round(($free["Mem:"]["used"])*100/($free["Mem:"]["total"]))
         )),
-        "Disk"=>(array(
+        "disk"=>(array(
             "fileSystem"=>$dfname,
             "total"=>round($df[$dfname]["1K-blocks"]/1024/1024,2),
             "used"=>round($df[$dfname]["Used"]/1024/1024,2),
@@ -111,9 +111,9 @@ if ($_GET["format"]=="json"){
             "down"=>round(((($rx2-$rx1)/$time)/1024),2),
             "up"=>round(((($tx2-$tx1)/$time)/1024),2)
         ),
-        "Uptime"=>$uptime,
-        "PC"=>$uname,
-        "Version"=>"2.0"
+        "uptime"=>$uptime,
+        "pc"=>$uname,
+        "version"=>"2.0"
     );
     echo json_encode($json);
 } 
@@ -159,7 +159,7 @@ else {
 
     echo "<p>$key</p>";
     echo "<img src=http://api.qrserver.com/v1/create-qr-code/?size=150x150&data=$key>";
-    echo "<a src='$host'>$host</a>";
+    echo "<p><a src='$host'>$host</a></p>";
     echo "<p>Please scan the QR code above using Monitorize App.</p>";
 
     echo '</div>';
