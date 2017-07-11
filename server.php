@@ -78,16 +78,6 @@ $uname[type] = shell_exec("uname -o");
 if ($_GET["format"]=="json"){
     header('Content-Type: application/json');
 
-    $rx1 = getRx();
-    $tx1 = getTx();
-    if (is_numeric($_GET["time"])) {
-        $time = $_GET["time"];
-    }else{
-        $time = 4;
-    }
-    sleep($time);
-    $rx2 = getRx();
-    $tx2 = getTx();
     $json = array(
         "cpu"=>(array(
             "architecture"=>$lscpu["Architecture"],
@@ -108,12 +98,12 @@ if ($_GET["format"]=="json"){
             "use"=>(int)substr($df[$dfname]["Use%"],0,-1)
         )),
         "net"=>array(
-            "down"=>round(((($rx2-$rx1)/$time)/1024),2),
-            "up"=>round(((($tx2-$tx1)/$time)/1024),2)
+            "down"=>round((getRx()/1024),2),
+            "up"=>round((getTx()/1024),2)
         ),
         "uptime"=>$uptime,
         "pc"=>$uname,
-        "version"=>"2.0"
+        "version"=>"2.1"
     );
     echo json_encode($json);
 } 
@@ -128,8 +118,7 @@ else if ($_GET["format"]=="full"){
             "Rx"=>getRx(),
             "Tx"=>getTx()
         ),
-        "uname"=>$uname,
-        "version"=>"2.0"
+        "uname"=>$uname
     );
     echo json_encode($full);
 }
@@ -153,7 +142,7 @@ else {
     $host = "http://$_SERVER[SERVER_NAME]$_SERVER[REQUEST_URI]";
 
     //post host to server to get key
-    $key =  httpPost(array('url' => $host), "https://monitorize.herokuapp.com/new");
+    $key =  httpPost(array('url' => $host), "http://wip.ng-enious.com:5000/");
     //html stuff we need
     echo '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><head><body><div>';
 
