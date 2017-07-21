@@ -139,7 +139,7 @@ else {
         return $result;
     };
 
-    $host = "http://$_SERVER[SERVER_NAME]$_SERVER[REQUEST_URI]";
+    $host = $_SERVER[REQUEST_SCHEME] . '://' . $_SERVER[SERVER_NAME] . $_SERVER[REQUEST_URI];
 
     //post host to server to get key
     $key =  httpPost(array('url' => $host), "http://wip.ng-enious.com:5000/new");
